@@ -1,0 +1,2533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hermes - Crypto Trading Assistant</title>
+    <style>
+        :root {
+            --primary: #FFFFFF;
+            --light: #FFFFFF;
+            --dark: #000000;
+            --gray: #1A1A1A;
+            --text: #F2F2F2;
+            --secondary: #222222;
+            --accent: #FFFFFF;
+        }
+       
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+       
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+        }
+       
+        /* Loading Screen Styles */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        .loading-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+       
+        .loading-gif {
+            width: 150px;
+            height: auto;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+       
+        .loading-text {
+            color: var(--light);
+            font-size: 1.5rem;
+            margin-top: 20px;
+            opacity: 0.8;
+        }
+       
+        .loading-dots {
+            display: flex;
+            margin-top: 15px;
+        }
+       
+        .loading-dot {
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border-radius: 50%;
+            margin: 0 5px;
+            animation: pulse 1.5s infinite;
+        }
+       
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+       
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.6;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0.8);
+                opacity: 0.6;
+            }
+        }
+        
+        /* Main content initially hidden */
+        #main-content {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        #main-content.show {
+            opacity: 1;
+        }
+       
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 8%;
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+            background-color: rgba(0,0,0,0.95);
+            backdrop-filter: blur(10px);
+        }
+       
+        .logo {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+       
+        .logo-icon {
+            height: 40px;
+            width: 40px;
+        }
+       
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+       
+        .nav-links a {
+            text-decoration: none;
+            color: var(--light);
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+       
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+       
+        .buy-btn {
+            background-color: var(--light);
+            color: var(--dark);
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+       
+        .buy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+       
+        header {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 0 8%;
+        }
+       
+        .hero-content {
+            width: 50%;
+            padding-right: 2rem;
+        }
+        
+        .hero-visual {
+            width: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .hermes-main-animation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .hermes-main-gif {
+            width: 300px;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+            animation: float-and-glow 6s ease-in-out infinite;
+        }
+        
+        @keyframes float-and-glow {
+            0% {
+                transform: translateY(0) scale(1);
+                box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+            }
+            50% {
+                transform: translateY(-15px) scale(1.02);
+                box-shadow: 0 0 50px rgba(255, 255, 255, 0.4);
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+            }
+        }
+       
+        .hermes-logo-animation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+       
+        .hermes-logo-large {
+            animation: float-and-pulse 8s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+        }
+       
+        @keyframes float-and-pulse {
+            0% {
+                transform: translateY(0) scale(1);
+                filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.2));
+            }
+            25% {
+                transform: translateY(-10px) scale(1.02);
+                filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.4));
+            }
+            50% {
+                transform: translateY(0) scale(1);
+                filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.2));
+            }
+            75% {
+                transform: translateY(10px) scale(0.98);
+                filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.1));
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.2));
+            }
+        }
+       
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            color: var(--light);
+            line-height: 1.2;
+        }
+       
+        h1 span {
+            color: var(--primary);
+        }
+       
+        .hero-desc {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 2.5rem;
+            max-width: 90%;
+            color: #AAAAAA;
+        }
+       
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+       
+        .secondary-btn {
+            background-color: transparent;
+            color: var(--light);
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            border: 1px solid #444444;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+       
+        .secondary-btn:hover {
+            background-color: rgba(255,255,255,0.05);
+            border-color: var(--light);
+        }
+       
+        .stats {
+            display: flex;
+            margin-top: 3rem;
+            gap: 2rem;
+        }
+       
+        .stat {
+            display: flex;
+            flex-direction: column;
+        }
+       
+        .stat-number {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: var(--light);
+        }
+       
+        .stat-label {
+            font-size: 0.9rem;
+            color: #AAAAAA;
+        }
+       
+        .notifications-section {
+            padding: 8rem 8%;
+            background-color: #111111;
+            border-top: 1px solid #222222;
+        }
+
+        /* How It Works Section */
+        .how-it-works-section {
+            padding: 8rem 8%;
+            background-color: #0A0A0A;
+            border-top: 1px solid #222222;
+        }
+
+        .steps-container {
+            max-width: 1200px;
+            margin: 0 auto 4rem;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4rem;
+            gap: 3rem;
+        }
+
+        .step-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .step-content {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .step-content h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 1rem;
+        }
+
+        .step-content p {
+            font-size: 1.1rem;
+            color: #AAAAAA;
+            line-height: 1.6;
+        }
+
+        .step-visual {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .platform-logos {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .platform-logo {
+            width: 80px;
+            height: 80px;
+            background-color: #1A1A1A;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+        }
+
+        .platform-logo:hover {
+            transform: translateY(-5px);
+            border-color: #00D896;
+            box-shadow: 0 10px 30px rgba(0, 216, 150, 0.2);
+        }
+
+        .signal-notification {
+            background-color: #1A1A1A;
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid #333333;
+            min-width: 250px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .signal-type {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .signal-type.buy {
+            background-color: rgba(0, 216, 150, 0.2);
+            color: #00D896;
+            border: 1px solid rgba(0, 216, 150, 0.3);
+        }
+
+        .signal-time {
+            font-size: 0.8rem;
+            color: #9CA3AF;
+        }
+
+        .signal-pair {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 0.5rem;
+        }
+
+        .signal-price, .signal-target {
+            font-size: 0.9rem;
+            color: #AAAAAA;
+            margin-bottom: 0.3rem;
+        }
+
+        .profit-display {
+            text-align: center;
+            background-color: #1A1A1A;
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid #333333;
+        }
+
+        .profit-amount {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #00D896;
+            margin-bottom: 0.5rem;
+        }
+
+        .profit-percentage {
+            font-size: 1.1rem;
+            color: #00D896;
+            opacity: 0.8;
+        }
+
+        .trading-example {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .trading-example h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background-color: #1A1A1A;
+            border-radius: 20px;
+            padding: 2rem 2rem 1.5rem 2rem;
+            border: 1px solid #333333;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .chart-pair {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--light);
+        }
+
+        .chart-timeframe {
+            font-size: 0.9rem;
+            color: #AAAAAA;
+            background-color: #222222;
+            padding: 0.3rem 0.8rem;
+            border-radius: 12px;
+        }
+
+        .price-chart {
+            position: relative;
+            height: 200px;
+            margin-bottom: 3rem;
+        }
+
+        .price-line {
+            position: relative;
+            height: 100%;
+        }
+
+        .price-path {
+            width: 100%;
+            height: 100%;
+        }
+
+        .buy-signal-point, .sell-signal-point {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .signal-marker {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            animation: pulse-marker 2s infinite;
+        }
+
+        .buy-marker {
+            background-color: rgba(0, 216, 150, 0.2);
+            border: 2px solid #00D896;
+        }
+
+        .sell-marker {
+            background-color: rgba(255, 193, 7, 0.2);
+            border: 2px solid #FFC107;
+        }
+
+        @keyframes pulse-marker {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 216, 150, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(0, 216, 150, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 216, 150, 0);
+            }
+        }
+
+        .signal-tooltip {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #000000;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            padding: 0.8rem;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .tooltip-type {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #00D896;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.3rem;
+        }
+
+        .tooltip-price {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 0.2rem;
+        }
+
+        .tooltip-time {
+            font-size: 0.7rem;
+            color: #AAAAAA;
+        }
+
+        .price-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #AAAAAA;
+            margin-top: 1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .trade-result {
+            display: flex;
+            justify-content: space-around;
+            background-color: #222222;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .result-item {
+            text-align: center;
+        }
+
+        .result-label {
+            display: block;
+            font-size: 0.8rem;
+            color: #AAAAAA;
+            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .result-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--light);
+        }
+
+        .result-item.profit .result-value {
+            color: #00D896;
+            font-weight: 700;
+        }
+
+        .trade-calculator {
+            background-color: #1A1A1A;
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid #333333;
+            margin-top: 2rem;
+        }
+
+        .calculator-row {
+            display: flex;
+            gap: 2rem;
+            align-items: end;
+        }
+
+        .leverage-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-width: 150px;
+        }
+
+        .leverage-selector label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--light);
+        }
+
+        .leverage-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #222222;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .leverage-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00D896;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(0, 216, 150, 0.5);
+        }
+
+        .leverage-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00D896;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 8px rgba(0, 216, 150, 0.5);
+        }
+
+        .leverage-display {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #00D896;
+            background-color: #222222;
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid #333333;
+        }
+
+        .investment-slider {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .investment-slider label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--light);
+        }
+
+        .investment-slider input {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #222222;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .investment-slider input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00D896;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(0, 216, 150, 0.5);
+        }
+
+        .investment-slider input::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00D896;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 8px rgba(0, 216, 150, 0.5);
+        }
+
+        .investment-display {
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--light);
+            background-color: #222222;
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid #333333;
+            min-width: 100px;
+        }
+
+        @media (max-width: 768px) {
+            .step-item {
+                flex-direction: column !important;
+                text-align: center;
+                gap: 2rem;
+            }
+
+            .step-item:nth-child(even) {
+                flex-direction: column !important;
+            }
+
+            .platform-logos {
+                justify-content: center;
+            }
+
+            .platform-logo {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+
+            .chart-container {
+                padding: 1.5rem;
+            }
+
+            .trade-result {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .calculator-row {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .leverage-selector {
+                min-width: auto;
+            }
+        }
+       
+        .section-heading {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+       
+        .section-heading h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 1rem;
+        }
+       
+        .section-heading p {
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            color: #AAAAAA;
+        }
+       
+        .notifications-container {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+       
+        .notification-card {
+            background-color: #1A1A1A;
+            border-radius: 16px;
+            padding: 1.5rem;
+            width: 300px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 1px solid #333333;
+            transition: all 0.3s ease;
+        }
+       
+        .notification-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+       
+        .notification-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+       
+        .notification-type {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+       
+        .notification-type.short {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+       
+        .notification-time {
+            font-size: 0.8rem;
+            color: #9CA3AF;
+        }
+       
+        .notification-content {
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+        }
+       
+        .notification-asset {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.8rem;
+            background-color: #222222;
+            border-radius: 8px;
+            border: 1px solid #333333;
+        }
+       
+        .asset-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+       
+        .asset-price {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--light);
+        }
+       
+        .asset-change {
+            font-size: 0.8rem;
+            color: white;
+        }
+       
+        .asset-change.negative {
+            color: #AAAAAA;
+        }
+       
+        .pricing-section {
+            padding: 8rem 8%;
+            background-color: #050505;
+            border-top: 1px solid #222222;
+        }
+       
+        .pricing-container {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 4rem;
+            flex-wrap: wrap;
+        }
+       
+        .pricing-card {
+            background-color: #111111;
+            border: 1px solid #333333;
+            border-radius: 16px;
+            padding: 2rem;
+            width: 300px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+       
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+       
+        .pricing-card.featured {
+            border: 2px solid #FFFFFF;
+            transform: scale(1.05);
+        }
+       
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+       
+        .pricing-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #FFFFFF;
+            color: #000000;
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+       
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+       
+        .pricing-header h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+       
+        .pricing-amount {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+       
+        .price {
+            font-size: 3rem;
+            font-weight: 800;
+        }
+       
+        .period {
+            font-size: 1rem;
+            color: #AAAAAA;
+        }
+       
+        .pricing-features ul {
+            list-style-type: none;
+            padding: 0;
+            margin-bottom: 2rem;
+        }
+       
+        .pricing-features ul li {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #222222;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+       
+        .pricing-features ul li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #FFFFFF;
+        }
+       
+        .pricing-features ul li:last-child {
+            border-bottom: none;
+        }
+       
+        .pricing-btn {
+            width: 100%;
+        }
+       
+        footer {
+            padding: 4rem 8%;
+            background-color: #000000;
+            color: white;
+            border-top: 1px solid #222222;
+        }
+       
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+       
+        .footer-brand {
+            max-width: 300px;
+        }
+       
+        .footer-brand h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+       
+        .footer-brand p {
+            line-height: 1.6;
+            color: #9CA3AF;
+        }
+       
+        .footer-links {
+            display: flex;
+            gap: 4rem;
+        }
+       
+        .footer-column h4 {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+       
+        .footer-column ul {
+            list-style: none;
+        }
+       
+        .footer-column ul li {
+            margin-bottom: 0.8rem;
+        }
+       
+        .footer-column ul li a {
+            text-decoration: none;
+            color: #9CA3AF;
+            transition: color 0.3s ease;
+        }
+       
+        .footer-column ul li a:hover {
+            color: var(--primary);
+        }
+       
+        .copyright {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #2D3748;
+            text-align: center;
+            color: #9CA3AF;
+        }
+       
+        @media (max-width: 1024px) {
+            .hero-content, .hero-visual {
+                width: 100%;
+            }
+           
+            header {
+                flex-direction: column;
+                height: auto;
+                padding-top: 8rem;
+                padding-bottom: 4rem;
+            }
+           
+            .hero-visual {
+                margin-top: 2rem;
+                height: 300px;
+            }
+            
+            .hermes-main-gif {
+                width: 250px;
+            }
+           
+            .notifications-container {
+                flex-direction: column;
+                align-items: center;
+            }
+           
+            .notification-card {
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+       
+        /* Demo Modal Styles */
+        .demo-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+        
+        .demo-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .demo-content {
+            background-color: #111111;
+            border-radius: 24px;
+            padding: 3rem;
+            width: 90%;
+            max-width: 800px;
+            border: 1px solid #222222;
+            position: relative;
+            transform: scale(0.7);
+            transition: transform 0.3s ease;
+            margin: 2rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        
+        .demo-modal.active .demo-content {
+            transform: scale(1);
+        }
+        
+        .demo-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            color: #AAAAAA;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .demo-close:hover {
+            color: #FFFFFF;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .demo-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--light);
+        }
+        
+        .demo-title span {
+            color: #00D896;
+        }
+        
+        .demo-subtitle {
+            font-size: 1.1rem;
+            color: #AAAAAA;
+        }
+        
+        .amount-section {
+            margin-bottom: 3rem;
+        }
+        
+        .amount-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--light);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .amount-display {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .amount-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--light);
+            margin-bottom: 0.5rem;
+        }
+        
+        .amount-subtitle {
+            font-size: 1rem;
+            color: #AAAAAA;
+        }
+        
+        .demo-slider-container {
+            position: relative;
+            margin: 2rem 0;
+            height: 8px;
+            background: #222222;
+            border-radius: 4px;
+        }
+        
+        .demo-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: transparent;
+            outline: none;
+            -webkit-appearance: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+        }
+        
+        .demo-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #00D896;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 216, 150, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .demo-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(0, 216, 150, 0.8);
+        }
+        
+        .demo-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #00D896;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(0, 216, 150, 0.5);
+        }
+        
+        .demo-slider::-moz-range-track {
+            background: transparent;
+        }
+        
+        .demo-slider-track {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 8px;
+            background: linear-gradient(90deg, #00D896, #00B87A);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            z-index: 1;
+        }
+        
+        .pnl-section {
+            margin-top: 3rem;
+        }
+        
+        .pnl-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--light);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .pnl-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .pnl-card {
+            background-color: #1A1A1A;
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid #333333;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .pnl-card:hover {
+            transform: translateY(-3px);
+            border-color: #00D896;
+            box-shadow: 0 5px 20px rgba(0, 216, 150, 0.1);
+        }
+        
+        .pnl-period {
+            font-size: 0.8rem;
+            color: #AAAAAA;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .pnl-amount {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #00D896;
+            margin-bottom: 0.2rem;
+        }
+        
+        .pnl-percentage {
+            font-size: 0.8rem;
+            color: #00D896;
+            opacity: 0.8;
+        }
+        
+        .demo-cta {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 2rem;
+            background-color: #0A0A0A;
+            border-radius: 16px;
+            border: 1px solid #222222;
+        }
+        
+        .demo-cta-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--light);
+        }
+        
+        .demo-cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .demo-btn-primary {
+            background-color: #00D896;
+            color: #000000;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-btn-primary:hover {
+            background-color: #00B87A;
+            transform: translateY(-2px);
+        }
+        
+        .demo-btn-secondary {
+            background-color: transparent;
+            color: var(--light);
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            border: 1px solid #444444;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-btn-secondary:hover {
+            background-color: rgba(255,255,255,0.05);
+            border-color: var(--light);
+        }
+        .construction-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .construction-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .construction-content {
+            background-color: #1A1A1A;
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            width: 90%;
+            max-width: 450px;
+            border: 1px solid #333333;
+            position: relative;
+            transform: scale(0.7);
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+        
+        .construction-modal.active .construction-content {
+            transform: scale(1);
+        }
+        
+        .construction-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: #AAAAAA;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .construction-close:hover {
+            color: #FFFFFF;
+        }
+        
+        .construction-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        .construction-sign {
+            background-color: #FFD700;
+            color: #000000;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            border: 2px solid #FFA500;
+        }
+        
+        .construction-title {
+            color: #FFFFFF;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .construction-message {
+            color: #AAAAAA;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            margin-bottom: 2rem;
+        }
+        
+        .construction-btn {
+            background-color: #FFFFFF;
+            color: #000000;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .construction-btn:hover {
+            background-color: #F0F0F0;
+            transform: translateY(-2px);
+        }
+        .payment-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .payment-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .payment-content {
+            background-color: #1A1A1A;
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid #333333;
+            position: relative;
+            transform: scale(0.7);
+            transition: transform 0.3s ease;
+        }
+        
+        .payment-modal.active .payment-content {
+            transform: scale(1);
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: #AAAAAA;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            color: #FFFFFF;
+        }
+        
+        .payment-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .payment-header h3 {
+            color: #FFFFFF;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .selected-plan {
+            background-color: #222222;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border: 1px solid #333333;
+        }
+        
+        .plan-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #FFFFFF;
+        }
+        
+        .plan-price {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            margin-top: 0.5rem;
+        }
+        
+        .payment-methods {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .payment-option {
+            flex: 1;
+            background-color: #222222;
+            border: 2px solid #333333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .payment-option:hover {
+            border-color: #FFFFFF;
+            background-color: #2A2A2A;
+        }
+        
+        .payment-option.selected {
+            border-color: #FFFFFF;
+            background-color: #2A2A2A;
+        }
+        
+        .payment-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .payment-name {
+            font-weight: 600;
+            color: #FFFFFF;
+            margin-bottom: 0.3rem;
+        }
+        
+        .payment-desc {
+            font-size: 0.9rem;
+            color: #AAAAAA;
+        }
+        
+        .payment-form {
+            display: none;
+            margin-top: 1.5rem;
+        }
+        
+        .payment-form.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #FFFFFF;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            background-color: #222222;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            color: #FFFFFF;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #FFFFFF;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .proceed-btn {
+            width: 100%;
+            background-color: #FFFFFF;
+            color: #000000;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+        
+        .proceed-btn:hover {
+            background-color: #F0F0F0;
+            transform: translateY(-2px);
+        }
+        
+        .interac-info {
+            background-color: #222222;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            border: 1px solid #333333;
+        }
+        
+        .interac-details {
+            color: #FFFFFF;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+           
+            h1 {
+                font-size: 2.5rem;
+            }
+           
+            .footer-content {
+                flex-direction: column;
+                gap: 2rem;
+            }
+           
+            .footer-links {
+                flex-wrap: wrap;
+                gap: 2rem;
+            }
+            
+            .payment-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+            
+            .payment-methods {
+                flex-direction: column;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loading-screen">
+        <img src="https://cdn.dribbble.com/userupload/19499597/file/original-80a89eee8a9fccbf320e5eb0ae4fb0ac.gif" alt="Hermes Loading" class="loading-gif">
+        <div class="loading-text">Launching Hermes API</div>
+        <div class="loading-dots">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+        </div>
+    </div>
+   
+    <!-- Main Content -->
+    <div id="main-content">
+        <nav>
+            <div class="logo">
+                <svg class="logo-icon" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Hermes Winged Helmet Logo -->
+                    <circle cx="20" cy="20" r="15" fill="black"/>
+                    <path d="M20 5C12.832 5 7 10.832 7 18C7 25.168 12.832 31 20 31C27.168 31 33 25.168 33 18C33 10.832 27.168 5 20 5ZM20 29C13.935 29 9 24.065 9 18C9 11.935 13.935 7 20 7C26.065 7 31 11.935 31 18C31 24.065 26.065 29 20 29Z" fill="white"/>
+                    <path d="M20 10C19.448 10 19 10.448 19 11V12C19 12.552 19.448 13 20 13C20.552 13 21 12.552 21 12V11C21 10.448 20.552 10 20 10Z" fill="white"/>
+                    <path d="M24 13.5C24 14.328 23.328 15 22.5 15H21V20C21 21.105 20.105 22 19 22H18C17.448 22 17 21.552 17 21C17 20.448 17.448 20 18 20H19V13H17.5C16.672 13 16 12.328 16 11.5C16 10.672 16.672 10 17.5 10H22.5C23.328 10 24 10.672 24 11.5V13.5Z" fill="white"/>
+                    <!-- Wings -->
+                    <path d="M30 8L36 3" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M10 8L4 3" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M35 10L38 7" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M5 10L2 7" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                Hermes
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works" onclick="scrollToHowItWorks()">How It Works</a>
+                <a href="#pricing" onclick="scrollToPricing()">Plans</a>
+            </div>
+            <button class="buy-btn" onclick="scrollToPricing()">GET STARTED</button>
+        </nav>
+       
+        <header>
+            <div class="hero-content">
+                <h1>Trade Smarter with <span>Hermes</span> Bot</h1>
+                <p class="hero-desc">Get real-time trading signals and notifications when it's time to long or short. Our AI-powered bot analyzes market trends to help you make better trading decisions.</p>
+                <div class="cta-buttons">
+                    <button class="buy-btn" onclick="scrollToPricing()">GET STARTED</button>
+                    <button class="secondary-btn" onclick="openDemo()">Watch Demo</button>
+                </div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-number">96%</span>
+                        <span class="stat-label">Signal Accuracy</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">24/7</span>
+                        <span class="stat-label">Market Monitoring</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">$150</span>
+                        <span class="stat-label">Mentorship Available</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="hermes-main-animation">
+                    <img src="https://cdn.dribbble.com/userupload/19499597/file/original-80a89eee8a9fccbf320e5eb0ae4fb0ac.gif" alt="Hermes Trading Bot" class="hermes-main-gif">
+                </div>
+            </div>
+        </header>
+       
+        <section class="notifications-section">
+            <div class="section-heading">
+                <h2>Real-Time Trading Bot Signals</h2>
+                <p>Get instant notifications delivered straight to your device - choose your plan below</p>
+            </div>
+            <div class="notifications-container">
+                <div class="notification-card">
+                    <div class="notification-header">
+                        <div class="notification-type">LONG</div>
+                        <div class="notification-time">2 hours ago</div>
+                    </div>
+                    <p class="notification-content">Strong buy signal detected for Bitcoin</p>
+                    <div class="notification-asset">
+                        <div class="asset-info">
+                            <div class="asset-name">BTC/USD</div>
+                        </div>
+                        <div class="asset-price-info">
+                            <div class="asset-price">$62,845</div>
+                            <div class="asset-change">+3.2%</div>
+                        </div>
+                    </div>
+                </div>
+               
+                <div class="notification-card">
+                    <div class="notification-header">
+                        <div class="notification-type short">SHORT</div>
+                        <div class="notification-time">5 hours ago</div>
+                    </div>
+                    <p class="notification-content">Bearish pattern forming on Ethereum</p>
+                    <div class="notification-asset">
+                        <div class="asset-info">
+                            <div class="asset-name">ETH/USD</div>
+                        </div>
+                        <div class="asset-price-info">
+                            <div class="asset-price">$3,128</div>
+                            <div class="asset-change negative">-1.8%</div>
+                        </div>
+                    </div>
+                </div>
+               
+                <div class="notification-card">
+                    <div class="notification-header">
+                        <div class="notification-type">LONG</div>
+                        <div class="notification-time">Yesterday</div>
+                    </div>
+                    <p class="notification-content">Strong support level reached for Solana</p>
+                    <div class="notification-asset">
+                        <div class="asset-info">
+                            <div class="asset-name">SOL/USD</div>
+                        </div>
+                        <div class="asset-price-info">
+                            <div class="asset-price">$142.5</div>
+                            <div class="asset-change">+5.7%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="how-it-works-section" id="how-it-works">
+            <div class="section-heading">
+                <h2>How It Works</h2>
+                <p>Simple 3-step process to start making profitable trades on any perpetuals platform</p>
+            </div>
+
+            <div class="steps-container">
+                <div class="step-item">
+                    <div class="step-content">
+                        <h3>Choose Your Platform</h3>
+                        <p>Trade on any perpetuals platform of your choice - Binance, Bybit, OKX, or any other exchange you prefer</p>
+                    </div>
+                    <div class="step-visual">
+                        <div class="platform-logos">
+                            <div class="platform-logo">📊</div>
+                            <div class="platform-logo">💹</div>
+                            <div class="platform-logo">📈</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-content">
+                        <h3>Receive Hermes Signals</h3>
+                        <p>Get instant notifications with precise buy/sell signals, entry points, and profit targets directly to your device</p>
+                    </div>
+                    <div class="step-visual">
+                        <div class="signal-notification">
+                            <div class="signal-header">
+                                <span class="signal-type buy">BUY SIGNAL</span>
+                                <span class="signal-time">Now</span>
+                            </div>
+                            <div class="signal-pair">ETH/USDT</div>
+                            <div class="signal-price">Entry: $2,445</div>
+                            <div class="signal-target">Target: $2,620</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-content">
+                        <h3>Execute & Profit</h3>
+                        <p>Follow our signals on your chosen platform and watch your profits grow with our 96% accurate predictions</p>
+                    </div>
+                    <div class="step-visual">
+                        <div class="profit-display">
+                            <div class="profit-amount">+$1,420</div>
+                            <div class="profit-percentage">+18.7% Profit</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trading-example">
+                <h3>Live Trading Example</h3>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <span class="chart-pair">ETH/USDT Perpetual</span>
+                        <span class="chart-timeframe">4H Chart</span>
+                    </div>
+                    <div class="price-chart">
+                        <div class="price-line">
+                            <div class="buy-signal-point" style="left: 25%;">
+                                <div class="signal-marker buy-marker">
+                                    <span class="marker-icon">📈</span>
+                                </div>
+                                <div class="signal-tooltip">
+                                    <div class="tooltip-type">BUY HERE</div>
+                                    <div class="tooltip-price">$2,445</div>
+                                    <div class="tooltip-time">Entry Point</div>
+                                </div>
+                            </div>
+                            <div class="sell-signal-point" style="left: 75%;">
+                                <div class="signal-marker sell-marker">
+                                    <span class="marker-icon">💰</span>
+                                </div>
+                                <div class="signal-tooltip">
+                                    <div class="tooltip-type">SELL HERE</div>
+                                    <div class="tooltip-price">$2,620</div>
+                                    <div class="tooltip-time">Take Profit</div>
+                                </div>
+                            </div>
+                            <svg class="price-path" viewBox="0 0 400 100">
+                                <path d="M0,60 Q100,50 120,40 Q150,35 200,30 Q250,25 300,35 Q350,45 400,40" 
+                                      stroke="#00D896" 
+                                      stroke-width="3" 
+                                      fill="none"
+                                      stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="price-labels">
+                            <span class="price-low">$2,400</span>
+                            <span class="price-high">$2,650</span>
+                        </div>
+                    </div>
+                    <div class="trade-result">
+                        <div class="result-item">
+                            <span class="result-label">Entry:</span>
+                            <span class="result-value">$2,445</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Exit:</span>
+                            <span class="result-value">$2,620</span>
+                        </div>
+                        <div class="result-item profit">
+                            <span class="result-label">Profit:</span>
+                            <span class="result-value" id="tradeProfit">+$135 (+5.4%)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="trade-calculator">
+                    <div class="calculator-row">
+                        <div class="leverage-selector">
+                            <label for="leverageSlider">Leverage</label>
+                            <input type="range" min="1" max="20" value="10" class="leverage-slider" id="leverageSlider">
+                            <span class="leverage-display" id="leverageDisplay">10x</span>
+                        </div>
+                        <div class="investment-slider">
+                            <label for="investmentSlider">Investment Amount</label>
+                            <input type="range" min="100" max="10000" value="2500" class="investment-slider" id="investmentSlider">
+                            <span class="investment-display" id="investmentDisplay">$2,500</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+       
+        <section class="pricing-section" id="pricing">
+            <div class="section-heading">
+                <h2>Choose Your Plan</h2>
+                <p>Start with our trading bot or level up with personal mentorship</p>
+            </div>
+            <div class="pricing-container">
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3>Trading Bot</h3>
+                        <div class="pricing-amount">
+                            <span class="price">$50</span>
+                            <span class="period">/month</span>
+                        </div>
+                    </div>
+                    <div class="pricing-features">
+                        <ul>
+                            <li>30+ Trading Signals Per Month</li>
+                            <li>Real-time Push Notifications</li>
+                            <li>24/7 Market Monitoring</li>
+                            <li>Technical Analysis Alerts</li>
+                            <li>Mobile & Desktop Access</li>
+                            <li>Direct Support Access</li>
+                        </ul>
+                    </div>
+                    <button class="buy-btn pricing-btn" onclick="showConstructionModal()">Start Trading</button>
+                </div>
+               
+                <div class="pricing-card featured">
+                    <div class="pricing-badge">Best Value</div>
+                    <div class="pricing-header">
+                        <h3>Mentorship</h3>
+                        <div class="pricing-amount">
+                            <span class="price">$150</span>
+                            <span class="period">one-time</span>
+                        </div>
+                    </div>
+                    <div class="pricing-features">
+                        <ul>
+                            <li>Perfect for Beginners</li>
+                            <li>45-Min Personal Trading Call</li>
+                            <li>Learn Crypto Futures & Perpetuals</li>
+                            <li>Lifetime Group Chat Access</li>
+                            <li>Live Trade Discussions</li>
+                            <li>Group Chat Support</li>
+                        </ul>
+                    </div>
+                    <button class="buy-btn pricing-btn" onclick="openPaymentModal('Mentorship', '$150')">Join Mentorship</button>
+                </div>
+            </div>
+        </section>
+       
+        <footer>
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>
+                        <svg width="24" height="24" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Hermes Winged Helmet Logo -->
+                            <circle cx="12" cy="12" r="9" fill="black"/>
+                            <path d="M12 3C7.6992 3 4.2 6.4992 4.2 10.8C4.2 15.1008 7.6992 18.6 12 18.6C16.3008 18.6 19.8 15.1008 19.8 10.8C19.8 6.4992 16.3008 3 12 3ZM12 17.4C8.361 17.4 5.4 14.439 5.4 10.8C5.4 7.161 8.361 4.2 12 4.2C15.639 4.2 18.6 7.161 18.6 10.8C18.6 14.439 15.639 17.4 12 17.4Z" fill="white"/>
+                            <path d="M12 6C11.6688 6 11.4 6.2688 11.4 6.6V7.2C11.4 7.5312 11.6688 7.8 12 7.8C12.3312 7.8 12.6 7.5312 12.6 7.2V6.6C12.6 6.2688 12.3312 6 12 6Z" fill="white"/>
+                            <path d="M14.4 8.1C14.4 8.5968 13.9968 9 13.5 9H12.6V12C12.6 12.663 12.063 13.2 11.4 13.2H10.8C10.4688 13.2 10.2 12.9312 10.2 12.6C10.2 12.2688 10.4688 12 10.8 12H11.4V7.8H10.5C10.0032 7.8 9.6 7.3968 9.6 6.9C9.6 6.4032 10.0032 6 10.5 6H13.5C13.9968 6 14.4 6.4032 14.4 6.9V8.1Z" fill="white"/>
+                            <!-- Wings -->
+                            <path d="M18 4.8L21.6 1.8" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+                            <path d="M6 4.8L2.4 1.8" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+                            <path d="M21 6L22.8 4.2" stroke="white" stroke-width="0.9" stroke-linecap="round"/>
+                            <path d="M3 6L1.2 4.2" stroke="white" stroke-width="0.9" stroke-linecap="round"/>
+                        </svg>
+                        Hermes
+                    </h3>
+                    <p>Your AI-powered crypto trading assistant that helps you make smarter trading decisions with real-time signals and alerts.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Product</h4>
+                        <ul>
+                            <li><a href="#">Features</a></li>
+                            <li><a href="#pricing">Pricing</a></li>
+                            <li><a href="#">Roadmap</a></li>
+                            <li><a href="#">Beta Program</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Resources</h4>
+                        <ul>
+                            <li><a href="#">Documentation</a></li>
+                            <li><a href="#">API</a></li>
+                            <li><a href="#">Tutorials</a></li>
+                            <li><a href="#">Blog</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Company</h4>
+                        <ul>
+                            <li><a href="#">About Us</a></li>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Contact</a></li>
+                            <li><a href="#">Privacy Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                © 2025 Hermes. All rights reserved.
+            </div>
+        </footer>
+    </div>
+
+    <!-- Demo Modal -->
+    <div class="demo-modal" id="demoModal">
+        <div class="demo-content">
+            <button class="demo-close" onclick="closeDemoModal()">&times;</button>
+            
+            <div class="demo-header">
+                <h2 class="demo-title">See Your Potential <span>Profits</span></h2>
+                <p class="demo-subtitle">Calculate how much profit you could have made with our 806% all-time return</p>
+            </div>
+
+            <div class="amount-section">
+                <div class="amount-label">Starting Investment Amount</div>
+                <div class="amount-display">
+                    <div class="amount-value" id="demoAmountValue">$1,000</div>
+                    <div class="amount-subtitle">Slide to adjust your starting amount</div>
+                </div>
+                
+                <div class="demo-slider-container">
+                    <div class="demo-slider-track" id="demoSliderTrack"></div>
+                    <input type="range" min="100" max="10000" value="1000" class="demo-slider" id="demoAmountSlider">
+                </div>
+            </div>
+
+            <div class="pnl-section">
+                <div class="pnl-label">Projected Profit (PNL)</div>
+                <div class="pnl-grid">
+                    <div class="pnl-card">
+                        <div class="pnl-period">10 Days</div>
+                        <div class="pnl-amount" id="demoPnl10">+$163</div>
+                        <div class="pnl-percentage">+16.3%</div>
+                    </div>
+                    <div class="pnl-card">
+                        <div class="pnl-period">20 Days</div>
+                        <div class="pnl-amount" id="demoPnl20">+$457</div>
+                        <div class="pnl-percentage">+45.7%</div>
+                    </div>
+                    <div class="pnl-card">
+                        <div class="pnl-period">30 Days</div>
+                        <div class="pnl-amount" id="demoPnl30">+$1,054</div>
+                        <div class="pnl-percentage">+105.4%</div>
+                    </div>
+                    <div class="pnl-card">
+                        <div class="pnl-period">All Time</div>
+                        <div class="pnl-amount" id="demoPnlAll">+$8,060</div>
+                        <div class="pnl-percentage">+806%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demo-cta">
+                <h3 class="demo-cta-title">Ready to Start Earning?</h3>
+                <div class="demo-cta-buttons">
+                    <button class="demo-btn-primary" onclick="openMentorshipFromDemo()">Start with Mentorship - $150</button>
+                    <button class="demo-btn-secondary" onclick="closeDemoModal()">View All Plans</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Under Construction Modal -->
+    <div class="construction-modal" id="constructionModal">
+        <div class="construction-content">
+            <button class="construction-close" onclick="closeConstructionModal()">&times;</button>
+            
+            <div class="construction-icon">👷‍♂️</div>
+            <div class="construction-sign">🚧 UNDER CONSTRUCTION 🚧</div>
+            
+            <h3 class="construction-title">Card Payments Coming Soon!</h3>
+            <p class="construction-message">
+                We're currently setting up secure credit card processing to ensure your payment information is fully protected. 
+                <br><br>
+                For now, we accept Interac e-Transfer for Canadian customers. It's fast, secure, and your account will be activated within 24 hours!
+            </p>
+            
+            <button class="construction-btn" onclick="closeConstructionAndUseInterac()">Use Interac e-Transfer Instead</button>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="payment-modal" id="paymentModal">
+        <div class="payment-content">
+            <button class="close-btn" onclick="closePaymentModal()">&times;</button>
+            
+            <div class="payment-header">
+                <h3>Complete Your Purchase</h3>
+                <div class="selected-plan">
+                    <div class="plan-name" id="selectedPlanName">Pro Plan</div>
+                    <div class="plan-price" id="selectedPlanPrice">$45/month</div>
+                </div>
+            </div>
+            
+            <div class="payment-methods">
+                <div class="payment-option" onclick="selectPaymentMethod('interac')">
+                    <div class="payment-icon">🏦</div>
+                    <div class="payment-name">Interac e-Transfer</div>
+                    <div class="payment-desc">Canadian bank transfer</div>
+                </div>
+                
+                <div class="payment-option" onclick="showCardConstruction()">
+                    <div class="payment-icon">💳</div>
+                    <div class="payment-name">Credit/Debit Card</div>
+                    <div class="payment-desc">Coming Soon</div>
+                </div>
+            </div>
+            
+            <!-- Interac Form -->
+            <div class="payment-form" id="interacForm">
+                <form id="interacPaymentForm" action="https://formspree.io/f/mvgbjlor" method="POST">
+                    <div class="form-group">
+                        <label for="customerName">Full Name</label>
+                        <input type="text" id="customerName" name="name" placeholder="John Doe" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
+                    </div>
+                    
+                    <!-- Hidden fields for plan details -->
+                    <input type="hidden" id="selectedPlan" name="plan" value="">
+                    <input type="hidden" id="selectedPrice" name="price" value="">
+                    <input type="hidden" name="_subject" value="New Hermes Payment Request">
+                
+                    <div class="interac-info">
+                        <div class="interac-details">
+                            <strong>Next Steps:</strong><br>
+                            1. You'll receive an email with payment instructions<br>
+                            2. Send Interac e-Transfer to: payments@hermes-trading.com<br>
+                            3. Your account will be activated within 24 hours
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="proceed-btn">Send Payment Instructions</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openDemo() {
+            const modal = document.getElementById('demoModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDemoModal() {
+            const modal = document.getElementById('demoModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function openMentorshipFromDemo() {
+            closeDemoModal();
+            setTimeout(() => {
+                openPaymentModal('Mentorship', '$150');
+            }, 300);
+        }
+
+        function updateDemoCalculator() {
+            const slider = document.getElementById('demoAmountSlider');
+            const amountValue = document.getElementById('demoAmountValue');
+            const sliderTrack = document.getElementById('demoSliderTrack');
+            const pnl10 = document.getElementById('demoPnl10');
+            const pnl20 = document.getElementById('demoPnl20');
+            const pnl30 = document.getElementById('demoPnl30');
+            const pnlAll = document.getElementById('demoPnlAll');
+
+            if (!slider) return;
+
+            const amount = parseInt(slider.value);
+            
+            // Update amount display
+            amountValue.textContent = `${amount.toLocaleString()}`;
+            
+            // Update slider track
+            const percentage = (amount - 100) / (10000 - 100) * 100;
+            sliderTrack.style.width = `${percentage}%`;
+            
+            // Calculate PNL based on different timeframes
+            const profit10 = Math.round(amount * 0.163);
+            pnl10.textContent = `+${profit10.toLocaleString()}`;
+            
+            const profit20 = Math.round(amount * 0.457);
+            pnl20.textContent = `+${profit20.toLocaleString()}`;
+            
+            const profit30 = Math.round(amount * 1.054);
+            pnl30.textContent = `+${profit30.toLocaleString()}`;
+            
+            const profitAll = Math.round(amount * 8.06);
+            pnlAll.textContent = `+${profitAll.toLocaleString()}`;
+        }
+
+        // Initialize demo calculator when modal opens
+        document.addEventListener('DOMContentLoaded', function() {
+            const demoSlider = document.getElementById('demoAmountSlider');
+            if (demoSlider) {
+                demoSlider.addEventListener('input', updateDemoCalculator);
+                updateDemoCalculator();
+            }
+
+            // Trade calculator functionality
+            const leverageSlider = document.getElementById('leverageSlider');
+            const investmentSlider = document.getElementById('investmentSlider');
+            
+            if (leverageSlider && investmentSlider) {
+                leverageSlider.addEventListener('input', updateTradeCalculator);
+                investmentSlider.addEventListener('input', updateTradeCalculator);
+                updateTradeCalculator();
+            }
+        });
+
+        function updateTradeCalculator() {
+            const leverageSlider = document.getElementById('leverageSlider');
+            const investmentSlider = document.getElementById('investmentSlider');
+            const leverageDisplay = document.getElementById('leverageDisplay');
+            const investmentDisplay = document.getElementById('investmentDisplay');
+            const tradeProfitElement = document.getElementById('tradeProfit');
+
+            if (!leverageSlider || !investmentSlider) return;
+
+            const leverage = parseInt(leverageSlider.value);
+            const investment = parseInt(investmentSlider.value);
+
+            // Update displays
+            leverageDisplay.textContent = `${leverage}x`;
+            investmentDisplay.textContent = `${investment.toLocaleString()}`;
+
+            // Calculate profit based on 5.4% return with leverage
+            // Entry: $2,445, Exit: $2,620 = 7.15% price movement
+            // But we show 5.4% return on investment after fees
+            const baseReturn = 0.054; // 5.4%
+            const leveragedReturn = baseReturn * leverage;
+            const profit = Math.round(investment * leveragedReturn);
+            const profitPercentage = (leveragedReturn * 100).toFixed(1);
+
+            tradeProfitElement.textContent = `+${profit.toLocaleString()} (+${profitPercentage}%)`;
+        }
+
+        // Under Construction Modal functionality
+        function showConstructionModal() {
+            const modal = document.getElementById('constructionModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function showCardConstruction() {
+            // Close payment modal immediately
+            closePaymentModal();
+            
+            // Show construction modal after payment modal closes
+            setTimeout(() => {
+                showConstructionModal();
+            }, 400);
+        }
+
+        function closeConstructionModal() {
+            const modal = document.getElementById('constructionModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function closeConstructionAndOpenMentorship() {
+            closeConstructionModal();
+            setTimeout(() => {
+                openPaymentModal('Mentorship', '$150');
+            }, 300);
+        }
+
+        function closeConstructionAndUseInterac() {
+            closeConstructionModal();
+            setTimeout(() => {
+                // Get the current plan details from the last opened payment modal
+                const selectedPlanInput = document.getElementById('selectedPlan');
+                const selectedPriceInput = document.getElementById('selectedPrice');
+                const planName = selectedPlanInput ? selectedPlanInput.value : 'Mentorship';
+                const planPrice = selectedPriceInput ? selectedPriceInput.value : '$150';
+                
+                // Reopen payment modal and auto-select Interac
+                openPaymentModal(planName, planPrice);
+                setTimeout(() => {
+                    selectPaymentMethod('interac');
+                }, 100);
+            }, 300);
+        }
+
+        // Loading screen functionality
+        window.addEventListener('load', function() {
+            // Wait 6 seconds before starting the transition
+            setTimeout(function() {
+                const loadingScreen = document.getElementById('loading-screen');
+                const mainContent = document.getElementById('main-content');
+                
+                // Start fade out animation for loading screen
+                loadingScreen.classList.add('fade-out');
+                
+                // Show main content with fade in
+                setTimeout(function() {
+                    mainContent.classList.add('show');
+                    // Remove loading screen from DOM after animation completes
+                    setTimeout(function() {
+                        loadingScreen.style.display = 'none';
+                    }, 500);
+                }, 100);
+            }, 6000);
+        });
+
+        // Smooth scroll to pricing section
+        function scrollToPricing() {
+            document.getElementById('pricing').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // Smooth scroll to how it works section
+        function scrollToHowItWorks() {
+            document.getElementById('how-it-works').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // Payment modal functionality
+        function openPaymentModal(planName, planPrice) {
+            const modal = document.getElementById('paymentModal');
+            const selectedPlanName = document.getElementById('selectedPlanName');
+            const selectedPlanPrice = document.getElementById('selectedPlanPrice');
+            const selectedPlanInput = document.getElementById('selectedPlan');
+            const selectedPriceInput = document.getElementById('selectedPrice');
+            
+            selectedPlanName.textContent = planName + ' Plan';
+            selectedPlanPrice.textContent = planPrice + (planName === 'Mentorship' ? ' one-time' : '/month');
+            
+            // Set hidden form fields
+            selectedPlanInput.value = planName;
+            selectedPriceInput.value = planPrice;
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePaymentModal() {
+            const modal = document.getElementById('paymentModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            
+            // Reset forms
+            resetPaymentForms();
+        }
+
+        function selectPaymentMethod(method) {
+            // Remove active class from all payment options
+            const options = document.querySelectorAll('.payment-option');
+            options.forEach(option => option.classList.remove('selected'));
+            
+            // Hide all forms
+            const forms = document.querySelectorAll('.payment-form');
+            forms.forEach(form => form.classList.remove('active'));
+            
+            // Find and activate the correct payment option
+            if (method === 'interac') {
+                const interacOption = document.querySelector('.payment-option');
+                if (interacOption) {
+                    interacOption.classList.add('selected');
+                }
+                document.getElementById('interacForm').classList.add('active');
+            }
+        }
+
+        function resetPaymentForms() {
+            // Remove selected state from payment options
+            const options = document.querySelectorAll('.payment-option');
+            options.forEach(option => option.classList.remove('selected'));
+            
+            // Hide all forms
+            const forms = document.querySelectorAll('.payment-form');
+            forms.forEach(form => form.classList.remove('active'));
+            
+            // Clear form inputs
+            const form = document.getElementById('interacPaymentForm');
+            if (form) {
+                form.reset();
+            }
+        }
+
+        // Format card number input
+        document.addEventListener('DOMContentLoaded', function() {
+            const cardNumberInput = document.getElementById('cardNumber');
+            if (cardNumberInput) {
+                cardNumberInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+                    let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+                    e.target.value = formattedValue;
+                });
+            }
+
+            const expiryInput = document.getElementById('expiryDate');
+            if (expiryInput) {
+                expiryInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length >= 2) {
+                        value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                    }
+                    e.target.value = value;
+                });
+            }
+        });
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            const paymentModal = document.getElementById('paymentModal');
+            const constructionModal = document.getElementById('constructionModal');
+            const demoModal = document.getElementById('demoModal');
+            
+            if (e.target === paymentModal) {
+                closePaymentModal();
+            }
+            if (e.target === constructionModal) {
+                closeConstructionModal();
+            }
+            if (e.target === demoModal) {
+                closeDemoModal();
+            }
+        });
+    </script>
+</body>
+</html>

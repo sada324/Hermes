@@ -797,10 +797,19 @@
             .calculator-row {
                 flex-direction: column;
                 gap: 1.5rem;
+                align-items: center;
             }
 
             .leverage-selector {
                 min-width: auto;
+                align-items: center;
+                text-align: center;
+            }
+
+            .investment-slider {
+                align-items: center;
+                text-align: center;
+                max-width: 300px;
             }
         }
        
@@ -2030,7 +2039,7 @@
                         <h3>Mentorship</h3>
                         <div class="pricing-amount">
                             <span class="price">$150</span>
-                            <span class="period">one-time</span>
+                            <span class="period">lifetime</span>
                         </div>
                     </div>
                     <div class="pricing-features">
@@ -2163,13 +2172,43 @@
         </div>
     </div>
 
-    <!-- Under Construction Modal -->
-    <div class="construction-modal" id="constructionModal">
-        <div class="construction-content">
-            <button class="construction-close" onclick="closeConstructionModal()">&times;</button>
+    <!-- Waitlist Modal -->
+    <div class="payment-modal" id="waitlistModal">
+        <div class="payment-content">
+            <button class="close-btn" onclick="closeWaitlistModal()">&times;</button>
             
-            <div class="construction-icon">👷‍♂️</div>
-            <div class="construction-sign">🚧 UNDER CONSTRUCTION 🚧</div>
+            <div class="payment-header">
+                <h3>Join the Trading Bot Waitlist</h3>
+                <p style="color: #AAAAAA; margin-top: 1rem;">Be the first to know when our AI trading bot launches!</p>
+            </div>
+
+            <form id="waitlistForm" action="https://formspree.io/f/xqadvnln" method="POST">
+                <div class="form-group">
+                    <label for="waitlistName">Full Name</label>
+                    <input type="text" id="waitlistName" name="name" placeholder="John Doe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="waitlistEmail">Email Address</label>
+                    <input type="email" id="waitlistEmail" name="email" placeholder="your.email@example.com" required>
+                </div>
+                
+                <!-- Hidden fields -->
+                <input type="hidden" name="_subject" value="New Trading Bot Waitlist Signup">
+                <input type="hidden" name="signup_type" value="Trading Bot Waitlist">
+                
+                <button type="submit" class="proceed-btn">Join Waitlist</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Card Construction Modal -->
+    <div class="construction-modal" id="cardConstructionModal">
+        <div class="construction-content">
+            <button class="construction-close" onclick="closeCardConstructionModal()">&times;</button>
+            
+            <div class="construction-icon">💳</div>
+            <div class="construction-sign">🚧 COMING SOON 🚧</div>
             
             <h3 class="construction-title">Card Payments Coming Soon!</h3>
             <p class="construction-message">
@@ -2178,7 +2217,26 @@
                 For now, we accept Interac e-Transfer for Canadian customers. It's fast, secure, and your account will be activated within 24 hours!
             </p>
             
-            <button class="construction-btn" onclick="closeConstructionAndUseInterac()">Use Interac e-Transfer Instead</button>
+            <button class="construction-btn" onclick="closeCardConstructionAndUseInterac()">Use Interac e-Transfer Instead</button>
+        </div>
+    </div>
+
+    <!-- Trading Bot Construction Modal -->
+    <div class="construction-modal" id="constructionModal">
+        <div class="construction-content">
+            <button class="construction-close" onclick="closeConstructionModal()">&times;</button>
+            
+            <div class="construction-icon">👷‍♂️</div>
+            <div class="construction-sign">🚧 UNDER CONSTRUCTION 🚧</div>
+            
+            <h3 class="construction-title">We're Still Coding This!</h3>
+            <p class="construction-message">
+                Our trading bot is currently under development. We're working hard to bring you the best crypto trading signals. 
+                <br><br>
+                Want to be notified when it's ready? Join our waitlist and get early access!
+            </p>
+            
+            <button class="construction-btn" onclick="openWaitlistForm()">Join Waitlist</button>
         </div>
     </div>
 
@@ -2188,7 +2246,6 @@
             <button class="close-btn" onclick="closePaymentModal()">&times;</button>
             
             <div class="payment-header">
-                <h3>Complete Your Purchase</h3>
                 <div class="selected-plan">
                     <div class="plan-name" id="selectedPlanName">Pro Plan</div>
                     <div class="plan-price" id="selectedPlanPrice">$45/month</div>
@@ -2353,10 +2410,35 @@
             // Close payment modal immediately
             closePaymentModal();
             
-            // Show construction modal after payment modal closes
+            // Show card construction modal after payment modal closes
             setTimeout(() => {
-                showConstructionModal();
+                const modal = document.getElementById('cardConstructionModal');
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
             }, 400);
+        }
+
+        function closeCardConstructionModal() {
+            const modal = document.getElementById('cardConstructionModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function closeCardConstructionAndUseInterac() {
+            closeCardConstructionModal();
+            setTimeout(() => {
+                // Get the current plan details from the last opened payment modal
+                const selectedPlanInput = document.getElementById('selectedPlan');
+                const selectedPriceInput = document.getElementById('selectedPrice');
+                const planName = selectedPlanInput ? selectedPlanInput.value : 'Mentorship';
+                const planPrice = selectedPriceInput ? selectedPriceInput.value : '$150';
+                
+                // Reopen payment modal and auto-select Interac
+                openPaymentModal(planName, planPrice);
+                setTimeout(() => {
+                    selectPaymentMethod('interac');
+                }, 100);
+            }, 300);
         }
 
         function closeConstructionModal() {
@@ -2387,6 +2469,27 @@
                     selectPaymentMethod('interac');
                 }, 100);
             }, 300);
+        }
+
+        function openWaitlistForm() {
+            closeConstructionModal();
+            setTimeout(() => {
+                const modal = document.getElementById('waitlistModal');
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }, 300);
+        }
+
+        function closeWaitlistModal() {
+            const modal = document.getElementById('waitlistModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            
+            // Reset form
+            const form = document.getElementById('waitlistForm');
+            if (form) {
+                form.reset();
+            }
         }
 
         // Loading screen functionality
@@ -2434,8 +2537,17 @@
             const selectedPlanInput = document.getElementById('selectedPlan');
             const selectedPriceInput = document.getElementById('selectedPrice');
             
-            selectedPlanName.textContent = planName + ' Plan';
-            selectedPlanPrice.textContent = planPrice + (planName === 'Mentorship' ? ' one-time' : '/month');
+            if (planName === 'Mentorship') {
+                selectedPlanName.textContent = planName + ' Plan 📙';
+                selectedPlanName.classList.add('mentorship');
+                selectedPlanPrice.textContent = planPrice + ' lifetime';
+                selectedPlanPrice.classList.add('mentorship-lifetime');
+            } else {
+                selectedPlanName.textContent = planName + ' Plan';
+                selectedPlanName.classList.remove('mentorship');
+                selectedPlanPrice.textContent = planPrice + '/month';
+                selectedPlanPrice.classList.remove('mentorship-lifetime');
+            }
             
             // Set hidden form fields
             selectedPlanInput.value = planName;
@@ -2463,6 +2575,12 @@
             const forms = document.querySelectorAll('.payment-form');
             forms.forEach(form => form.classList.remove('active'));
             
+            // Hide payment options once one is selected
+            const paymentMethods = document.querySelector('.payment-methods');
+            if (paymentMethods) {
+                paymentMethods.style.display = 'none';
+            }
+            
             // Find and activate the correct payment option
             if (method === 'interac') {
                 const interacOption = document.querySelector('.payment-option');
@@ -2481,6 +2599,12 @@
             // Hide all forms
             const forms = document.querySelectorAll('.payment-form');
             forms.forEach(form => form.classList.remove('active'));
+            
+            // Show payment methods again
+            const paymentMethods = document.querySelector('.payment-methods');
+            if (paymentMethods) {
+                paymentMethods.style.display = 'flex';
+            }
             
             // Clear form inputs
             const form = document.getElementById('interacPaymentForm');
@@ -2516,7 +2640,9 @@
         document.addEventListener('click', function(e) {
             const paymentModal = document.getElementById('paymentModal');
             const constructionModal = document.getElementById('constructionModal');
+            const cardConstructionModal = document.getElementById('cardConstructionModal');
             const demoModal = document.getElementById('demoModal');
+            const waitlistModal = document.getElementById('waitlistModal');
             
             if (e.target === paymentModal) {
                 closePaymentModal();
@@ -2524,8 +2650,14 @@
             if (e.target === constructionModal) {
                 closeConstructionModal();
             }
+            if (e.target === cardConstructionModal) {
+                closeCardConstructionModal();
+            }
             if (e.target === demoModal) {
                 closeDemoModal();
+            }
+            if (e.target === waitlistModal) {
+                closeWaitlistModal();
             }
         });
     </script>
